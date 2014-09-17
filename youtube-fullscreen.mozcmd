@@ -1,0 +1,51 @@
+[
+  {
+    name: 'youtube-fullscreen',
+    description: 'Opens the youtube video in a new tab. The video is in fullscreen mode and magnified. If the fullscreen is lost, e.g. by moving the mouse to another monitor, the video should be still big enough.',
+    exec: function(args, context) {
+      console = context.environment.window.console
+      hasFlashblock = (typeof context.environment.chromeWindow.gFlashblockEnabled !== "undefined")
+      url = context.environment.window.location.href;
+
+      // get the tabbrowser
+      gBrowser = context.environment.chromeWindow.getBrowser();
+
+      // starts with
+      if (url.indexOf("https://www.youtube.com/watch?v=") == 0 || url.indexOf("http://www.youtube.com/watch?v=") == 0) {
+          url = url.replace('/watch?v=', '/v/');
+
+          // try disable flashblock if available
+          if (hasFlashblock){
+            gFlashblockEnabledPrevious = context.environment.chromeWindow.gFlashblockEnabled;
+            context.environment.chromeWindow.gFlashblockEnabled = false;
+          }
+
+          // open a new tab
+          var tab = gBrowser.addTab(url);
+
+          // get the browser (not the tabbrowser) for the tab
+          var browser = gBrowser.getBrowserForTab(tab);
+
+          // wait till browser finished loading
+          browser.addEventListener("load", function () {
+
+            // switch to the selected tab
+            gBrowser.selectedTab = tab;
+
+            // try  fullscreen
+            browser.contentDocument.documentElement.mozRequestFullScreen();
+
+            // try to set flashblock to the previous value
+            if (hasFlashblock){
+              context.environment.chromeWindow.gFlashblockEnabled = gFlashblockEnabledPrevious;
+            }
+
+          }, true);
+      }
+      else {
+          return "Error: Not a YouTube video";
+      }
+
+    }
+  }
+]
